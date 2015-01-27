@@ -98,13 +98,18 @@ class PyGreen:
         return True
 
     def file_renderer(self, path):
+        fullpath = os.path.join(self.folder, path)
+        if os.path.isdir(fullpath):
+            path = os.path.join(path, "index.html")
+            fullpath = os.path.join(self.folder, path)
+
         if self.is_public(path):
             if path.split(".")[-1] in self.template_exts and \
                     self.templates.has_template(path):
                 t = self.templates.get_template(path)
                 data = t.render_unicode(pygreen=self)
                 return data.encode(t.module._source_encoding)
-            if os.path.exists(os.path.join(self.folder, path)):
+            if os.path.exists(fullpath):
                 return flask.send_file(path)
         flask.abort(404)
 
