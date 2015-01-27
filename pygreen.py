@@ -61,19 +61,13 @@ class PyGreen:
         # one of those regular expressions will not be outputed when generating
         # a static version of the web site
         self.file_exclusion = [r".*\.mako", r".*\.py", r"(^|.*\/)\..*"]
-        def is_public(path):
-            for ex in self.file_exclusion:
-                if re.match(ex,path):
-                    return False
-            return True
-            
         def base_lister():
             files = []
             for dirpath, dirnames, filenames in os.walk(self.folder):
                 for f in filenames:
                     absp = os.path.join(dirpath, f)
                     path = os.path.relpath(absp, self.folder)
-                    if is_public(path):
+                    if self.is_public(path):
                         files.append(path)
             return files
         # A list of functions. Each function must return a list of paths
@@ -84,20 +78,28 @@ class PyGreen:
         # will not be able to detect the files to export.
         self.file_listers = [base_lister]
 
-        def file_renderer(path):
-            if is_public(path):
-                if path.split(".")[-1] in self.template_exts and self.templates.has_template(path):
-                    t = self.templates.get_template(path)
-                    data = t.render_unicode(pygreen=self)
-                    return data.encode(t.module._source_encoding)
-                if os.path.exists(os.path.join(self.folder, path)):
-                    return flask.send_file(path)
-            flask.abort(404)
-        # The default function used to render files. Could be modified to change the way files are
-        # generated, like using another template language or transforming css...
-        self.file_renderer = file_renderer
+        # The default function used to render files. Could be modified to
+        # change the way files are generated, like using another template
+        # language or transforming css...
+        # self.file_renderer = file_renderer
         self.app.add_url_rule('/', "root", lambda: self.file_renderer('index.html'), methods=['GET', 'POST', 'PUT', 'DELETE'])
         self.app.add_url_rule('/<path:path>', "all_files", lambda path: self.file_renderer(path), methods=['GET', 'POST', 'PUT', 'DELETE'])
+
+    def is_public(self, path):
+        for ex in self.file_exclusion:
+            if re.match(ex,path):
+                return False
+        return True
+
+    def file_renderer(self, path):
+        if self.is_public(path):
+            if path.split(".")[-1] in self.template_exts and self.templates.has_template(path):
+                t = self.templates.get_template(path)
+                data = t.render_unicode(pygreen=self)
+                return data.encode(t.module._source_encoding)
+            if os.path.exists(os.path.join(self.folder, path)):
+                return flask.send_file(path)
+        flask.abort(404)
 
     def set_folder(self, folder):
         """
