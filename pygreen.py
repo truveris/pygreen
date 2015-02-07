@@ -79,10 +79,14 @@ class PyGreen:
         # will not be able to detect the files to export.
         self.file_listers = [base_lister]
 
-        # The default function used to render files. Could be modified to
-        # change the way files are generated, like using another template
-        # language or transforming css...
-        # self.file_renderer = file_renderer
+        self.add_url_rules()
+
+    def add_url_rules(self):
+        """The default function used to render files. Could be modified to
+        change the way files are generated, like using another template
+        language or transforming css...
+        """
+        self.file_renderer = file_renderer
         self.app.add_url_rule("/", "root",
                               lambda: self.file_renderer("index.html"),
                               methods=["GET", "POST", "PUT", "DELETE"])
@@ -202,7 +206,6 @@ class PyGreen:
         print("")
         args.func()
 
-pygreen = PyGreen()
-
 if __name__ == "__main__":
+    pygreen = PyGreen()
     pygreen.cli()
